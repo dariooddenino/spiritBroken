@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE QuasiQuotes #-}
 
 module Foundation where
 
@@ -15,7 +16,8 @@ import Text.Jasmine         (minifym)
 -- Used only when in "auth-dummy-login" setting is enabled.
 import Yesod.Auth.Dummy
 
-import Yesod.Auth.OpenId    (authOpenId, IdentifierType (Claimed))
+import Yesod.Auth.GoogleEmail2
+
 import Yesod.Default.Util   (addStaticContentExternal)
 import Yesod.Core.Types     (Logger)
 import qualified Yesod.Core.Unsafe as Unsafe
@@ -195,6 +197,11 @@ instance YesodPersist App where
 instance YesodPersistRunner App where
     getDBRunner = defaultGetDBRunner appConnPool
 
+
+-- Move somewhere else obvs
+clientId = ""
+clientSecret = ""
+
 instance YesodAuth App where
     type AuthId App = UserId
 
@@ -217,11 +224,18 @@ instance YesodAuth App where
                 }
 
     -- You can add other plugins like Google Email, email or OAuth here
-    authPlugins app = [authOpenId Claimed []] ++ extraAuthPlugins
+    authPlugins app = [ authGoogleEmail clientId clientSecret
+                      ] ++ extraAuthPlugins
         -- Enable authDummy login if enabled.
         where extraAuthPlugins = [authDummy | appAuthDummyLogin $ appSettings app]
 
     authHttpManager = getHttpManager
+
+    loginHandler = do
+      ma <- lift maybeAuthId
+      when (isJust ma) $
+        lift $ redirect HomeR
+      defaultLoginHandler
 
 -- | Access function to determine if a user is logged in.
 isAuthenticated :: Handler AuthResult

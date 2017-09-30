@@ -1,0 +1,31 @@
+/* Generic styles */
+
+@font-face {
+  font-family: Outrun;
+  src: url('../fonts/Outrun future.otf') format('opentype');
+}
+
+#site-logo {
+  font-family: Outrun;
+}
+
+.hero {
+  h1 {
+    font-family: Outrun;
+  }
+}
+
+#main-section {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+/* .content p:not(:last-child).panel- */
+/* .panel-heading { */
+/*   margin-bottom: 0; */
+/* } */
+
+.buffer {
+  width: 100%;
+  padding-bottom: 2em;
+}

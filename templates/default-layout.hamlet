@@ -1,7 +1,7 @@
-<nav .navbar.is-warning role="navigation" aria-label="main navigation">
+<nav .navbar.is-warning.is-bold role="navigation" aria-label="main navigation">
   <div .navbar-brand>
     <a .navbar-item href="//">
-      <h1>SpiritBroken
+      <h1 #site-logo .is-size-3>SpiritBroken
 
     <div .burger.navbar-burger data-target="navMenu">
       <span>
@@ -23,7 +23,7 @@
 <section>
   <div .container.is-fluid>
     $if not $ Just HomeR == mcurrentRoute
-      <nav .breadcrumb.is-small.has-dot-separators aria-label="bread-crumbs">
+      <nav .breadcrumb.has-dot-separator aria-label="bread-crumbs">
         <ul>
           $forall bc <- parents
             <li>
@@ -32,29 +32,18 @@
             <li .is-active>
               <a href="#">#{title}
 
-      <!-- <ul .breadcrumb> -->
-      <!--   $forall bc <- parents -->
-      <!--     <li> -->
-      <!--       <a href="@{fst bc}">#{snd bc} -->
-
-      <!--     <li .active>#{title} -->
 
   $maybe msg <- mmsg
     <div .alert.alert-info #message>#{msg}
 
-
-<section>
+<section .hero.is-dark.is-bold>
   <div .container.is-fluid>
-    <div .columns>
-      <div .column>
-        ^{widget}
-<!-- $if (Just HomeR == mcurrentRoute) -->
-<!--     ^{widget} -->
-<!-- $else -->
-<!--     <div .container.is-fluid> -->
-<!--         <div .row> -->
-<!--             <div .col-md-12> -->
-<!--                 ^{widget} -->
+    <div .hero-body.has-text-centered.is-uppercase>
+      <h1 .title.is-4>#{title}
+
+<section #main-section>
+  <div .container.is-fluid>
+    ^{widget}
 
 <!-- Footer -->
 <footer .footer>
