@@ -1,0 +1,64 @@
+<nav .navbar.is-warning role="navigation" aria-label="main navigation">
+  <div .navbar-brand>
+    <a .navbar-item href="//">
+      <h1>SpiritBroken
+
+    <div .burger.navbar-burger data-target="navMenu">
+      <span>
+      <span>
+      <span>
+
+  <div #navMenu .navbar-menu>
+    <div .navbar-start>
+      $forall MenuItem label route _ <- navbarLeftFilteredMenuItems
+        <a :Just route == mcurrentRoute:.is-active .navbar-item href="@{route}">
+          #{label}
+    <div .navbar-end>
+      $forall MenuItem label route _ <- navbarRightFilteredMenuItems
+        <a :Just route == mcurrentRoute:.is-active .navbar-item href="@{route}">
+          #{label}
+
+<!-- Page Contents -->
+
+<section>
+  <div .container.is-fluid>
+    $if not $ Just HomeR == mcurrentRoute
+      <nav .breadcrumb.is-small.has-dot-separators aria-label="bread-crumbs">
+        <ul>
+          $forall bc <- parents
+            <li>
+              <a href="@{fst bc}">#{snd bc}
+
+            <li .is-active>
+              <a href="#">#{title}
+
+      <!-- <ul .breadcrumb> -->
+      <!--   $forall bc <- parents -->
+      <!--     <li> -->
+      <!--       <a href="@{fst bc}">#{snd bc} -->
+
+      <!--     <li .active>#{title} -->
+
+  $maybe msg <- mmsg
+    <div .alert.alert-info #message>#{msg}
+
+
+<section>
+  <div .container.is-fluid>
+    <div .columns>
+      <div .column>
+        ^{widget}
+<!-- $if (Just HomeR == mcurrentRoute) -->
+<!--     ^{widget} -->
+<!-- $else -->
+<!--     <div .container.is-fluid> -->
+<!--         <div .row> -->
+<!--             <div .col-md-12> -->
+<!--                 ^{widget} -->
+
+<!-- Footer -->
+<footer .footer>
+  <div .container.is-fluid>
+    <div .content.has-text-centered>
+      <p>
+        #{appCopyright $ appSettings master}
