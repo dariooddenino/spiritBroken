@@ -133,7 +133,7 @@ instance Yesod App where
         -- you to use normal widget features in default-layout.
 
         pc <- widgetToPageContent $ do
-          addStylesheet $ StaticR css_bulma_css
+          addStylesheet $ StaticR css_main_css
           addStylesheetRemote "//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
           $(widgetFile "default-layout")
         withUrlRenderer $(hamletFile "templates/default-layout-wrapper.hamlet")
