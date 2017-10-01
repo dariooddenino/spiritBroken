@@ -32,5 +32,8 @@ database:
   database: "_env:PGDATABASE:spiritBroken"
   poolsize: "_env:PGPOOLSIZE:10"
 
-copyright: Made by the Maiagallo
+copyright: Made by Maiagallo
 #analytics: UA-YOURCODE
+
+google-client: "_env:GOOGLE_CLIENT:"
+google-secret: "_env:GOOGLE_SECRET:"

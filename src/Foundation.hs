@@ -9,9 +9,11 @@
 module Foundation where
 
 import Import.NoFoundation
+import Import.Helpers
 import Database.Persist.Sql (ConnectionPool, runSqlPool)
 import Text.Hamlet          (hamletFile)
 import Text.Jasmine         (minifym)
+import Control.Monad.Trans.Maybe
 
 -- Used only when in "auth-dummy-login" setting is enabled.
 import Yesod.Auth.Dummy
@@ -106,10 +108,10 @@ instance Yesod App where
                     , menuItemAccessCallback = True
                     }
                 , NavbarLeft $ MenuItem
-                    { menuItemLabel = "Profile"
-                    , menuItemRoute = ProfileR
-                    , menuItemAccessCallback = isJust muser
-                    }
+                  { menuItemLabel = "Add post"
+                  , menuItemRoute = PostR
+                  , menuItemAccessCallback = isJust muser
+                  }
                 , NavbarRight $ MenuItem
                     { menuItemLabel = "Login"
                     , menuItemRoute = AuthR LoginR
@@ -118,6 +120,11 @@ instance Yesod App where
                 , NavbarRight $ MenuItem
                     { menuItemLabel = "Logout"
                     , menuItemRoute = AuthR LogoutR
+                    , menuItemAccessCallback = isJust muser
+                    }
+                , NavbarRight $ MenuItem
+                    { menuItemLabel = "Profile"
+                    , menuItemRoute = ProfileR
                     , menuItemAccessCallback = isJust muser
                     }
                 ]
@@ -145,13 +152,13 @@ instance Yesod App where
 
     -- Routes not requiring authentication.
     isAuthorized (AuthR _) _ = return Authorized
-    isAuthorized CommentR _ = return Authorized
     isAuthorized HomeR _ = return Authorized
     isAuthorized FaviconR _ = return Authorized
     isAuthorized RobotsR _ = return Authorized
     isAuthorized (StaticR _) _ = return Authorized
 
     isAuthorized ProfileR _ = isAuthenticated
+    isAuthorized PostR _ = isAuthenticated
 
     -- This function creates static content files in the static folder
     -- and names them based on a hash of their content. This allows
@@ -186,6 +193,8 @@ instance YesodBreadcrumbs App where
   breadcrumb HomeR = return ("Home", Nothing)
   breadcrumb (AuthR _) = return ("Login", Just HomeR)
   breadcrumb ProfileR = return ("Profile", Just HomeR)
+  breadcrumb PostR = return ("Add a post", Just HomeR)
+  breadcrumb (EntryR n) = return ("Entry #" ++ (pack . show $ n), Just HomeR)
   breadcrumb  _ = return ("home", Nothing)
 
 -- How to run database actions.
@@ -198,12 +207,22 @@ instance YesodPersistRunner App where
     getDBRunner = defaultGetDBRunner appConnPool
 
 
--- Move somewhere else obvs
-clientId = ""
-clientSecret = ""
+getUser :: Manager -> HandlerT master IO (Maybe Person)
+getUser m = do
+  token <- getUserAccessToken
+  case token of
+    Nothing -> return Nothing
+    Just t -> getPerson m t
+
+-- getPerson' m t = MaybeT $ getPerson m t
+-- getToken' = MaybeT getUserAccessToken
+-- getUser' m = getToken' >>= getPerson' m
+
 
 instance YesodAuth App where
     type AuthId App = UserId
+
+    onLogin = setSuccessMessage "You are now logged in."
 
     -- Where to send a user after successful login
     loginDest _ = HomeR
@@ -216,15 +235,20 @@ instance YesodAuth App where
         x <- getBy $ UniqueUser $ credsIdent creds
         case x of
             Just (Entity uid _) -> return $ Authenticated uid
-            Nothing -> Authenticated <$> insert User
+            Nothing -> do
+              app <- getYesod
+              person <- lift $ getUser $ appHttpManager app
+              Authenticated <$> insert User
                 { userIdent = credsIdent creds
                 , userPassword = Nothing
                 , userNumEntries = 0
                 , userAverageVote = 0
+                , userName = person >>= personName >>= nameFormatted
+                , userImage = imageUri <$> (person >>= personImage)
                 }
 
     -- You can add other plugins like Google Email, email or OAuth here
-    authPlugins app = [ authGoogleEmail clientId clientSecret
+    authPlugins app = [ authGoogleEmailSaveToken (googleClient $ appSettings app) (googleSecret $ appSettings app)
                       ] ++ extraAuthPlugins
         -- Enable authDummy login if enabled.
         where extraAuthPlugins = [authDummy | appAuthDummyLogin $ appSettings app]

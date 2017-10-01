@@ -6,6 +6,7 @@
 
 / HomeR GET POST
 
-/comments CommentR POST
-
 /profile ProfileR GET
+
+/post PostR GET POST
+/e/#EntryId EntryR GET POST

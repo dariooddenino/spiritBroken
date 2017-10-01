@@ -24,13 +24,8 @@ data FileForm = FileForm
 -- inclined, or create a single monolithic file.
 getHomeR :: Handler Html
 getHomeR = do
-    (formWidget, formEnctype) <- generateFormPost sampleForm
-    let submission = Nothing :: Maybe FileForm
-        handlerName = "getHomeR" :: Text
     defaultLayout $ do
-        let (commentFormId, commentTextareaId, commentListId) = commentIds
-        aDomId <- newIdent
-        setTitle "Welcome To Yesod!"
+        setTitle "SpiritBroken!"
         $(widgetFile "homepage")
 
 postHomeR :: Handler Html
@@ -42,10 +37,10 @@ postHomeR = do
             _ -> Nothing
 
     defaultLayout $ do
-        let (commentFormId, commentTextareaId, commentListId) = commentIds
+        -- let (commentFormId, commentTextareaId, commentListId) = commentIds
         aDomId <- newIdent
-        setTitle "Welcome To Yesod!"
-        $(widgetFile "homepage")
+        setTitle "SpiritBroken"
+--        $(widgetFile "homepage")
 
 sampleForm :: Form FileForm
 sampleForm = renderBootstrap3 BootstrapBasicForm $ FileForm
@@ -63,5 +58,5 @@ sampleForm = renderBootstrap3 BootstrapBasicForm $ FileForm
                 ]
             }
 
-commentIds :: (Text, Text, Text)
-commentIds = ("js-commentForm", "js-createCommentTextarea", "js-commentList")
+-- commentIds :: (Text, Text, Text)
+-- commentIds = ("js-commentForm", "js-createCommentTextarea", "js-commentList")

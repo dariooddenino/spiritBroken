@@ -8,7 +8,10 @@
       <span>
       <span>
 
-  <div #navMenu .navbar-menu>
+  <!-- <div #navMenu .navbar-menu> -->
+  <!--   $maybe (uid, user) <- muser -->
+  <!--     $maybe n <- userImage user -->
+  <!--       #{n} -->
     <div .navbar-start>
       $forall MenuItem label route _ <- navbarLeftFilteredMenuItems
         <a :Just route == mcurrentRoute:.is-active .navbar-item href="@{route}">
@@ -16,13 +19,29 @@
     <div .navbar-end>
       $forall MenuItem label route _ <- navbarRightFilteredMenuItems
         <a :Just route == mcurrentRoute:.is-active .navbar-item href="@{route}">
-          #{label}
+          $case route
+            $of ProfileR
+              $maybe (uid, user) <- muser
+                $maybe iurl <- userImage user
+                  <figure .image>
+                    <img src="#{iurl}">
+                $nothing
+                  #{label}
+              $nothing
+                #{label}
+            $of _
+              #{label}
 
 <!-- Page Contents -->
 
-<section>
+<section .hero.is-dark.is-bold>
   <div .container.is-fluid>
-    $if not $ Just HomeR == mcurrentRoute
+    <div .hero-body.has-text-centered.is-uppercase>
+      <h1 .title.is-4>#{title}
+
+$if not $ Just HomeR == mcurrentRoute
+  <section>
+    <div .container.is-fluid>
       <nav .breadcrumb.has-dot-separator aria-label="bread-crumbs">
         <ul>
           $forall bc <- parents
@@ -32,14 +51,8 @@
             <li .is-active>
               <a href="#">#{title}
 
-
-  $maybe msg <- mmsg
-    <div .alert.alert-info #message>#{msg}
-
-<section .hero.is-dark.is-bold>
-  <div .container.is-fluid>
-    <div .hero-body.has-text-centered.is-uppercase>
-      <h1 .title.is-4>#{title}
+$maybe msg <- mmsg
+  #{msg}
 
 <section #main-section>
   <div .container.is-fluid>

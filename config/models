@@ -4,6 +4,8 @@ User
     UniqueUser ident
     numEntries Int
     averageVote Int
+    name Text Maybe
+    image Text Maybe
     deriving Typeable
 Email
     email Text
@@ -16,10 +18,9 @@ Comment json -- Adding "json" causes ToJSON and FromJSON instances to be derived
     deriving Eq
     deriving Show
 Entry json
-    ident Text
     userId UserId
     url Text
-    UniqueEntry ident
+    UniqueEntry url
     deriving Eq
     deriving Show
 Vote

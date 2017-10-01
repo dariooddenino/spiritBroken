@@ -21,3 +21,4 @@ cabal.sandbox.config
 spiritBroken.cabal
 .sass-cache
 static/css
+launchDev
