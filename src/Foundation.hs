@@ -13,7 +13,6 @@ import Import.Helpers
 import Database.Persist.Sql (ConnectionPool, runSqlPool)
 import Text.Hamlet          (hamletFile)
 import Text.Jasmine         (minifym)
-import Control.Monad.Trans.Maybe
 
 -- Used only when in "auth-dummy-login" setting is enabled.
 import Yesod.Auth.Dummy
@@ -108,7 +107,7 @@ instance Yesod App where
                     , menuItemAccessCallback = True
                     }
                 , NavbarLeft $ MenuItem
-                  { menuItemLabel = "Add post"
+                  { menuItemLabel = "Add entry"
                   , menuItemRoute = PostR
                   , menuItemAccessCallback = isJust muser
                   }
@@ -156,9 +155,11 @@ instance Yesod App where
     isAuthorized FaviconR _ = return Authorized
     isAuthorized RobotsR _ = return Authorized
     isAuthorized (StaticR _) _ = return Authorized
+    isAuthorized (EntryR _) False = return Authorized
 
     isAuthorized ProfileR _ = isAuthenticated
     isAuthorized PostR _ = isAuthenticated
+    isAuthorized (EntryR _) True = isAuthenticated
 
     -- This function creates static content files in the static folder
     -- and names them based on a hash of their content. This allows
@@ -193,8 +194,8 @@ instance YesodBreadcrumbs App where
   breadcrumb HomeR = return ("Home", Nothing)
   breadcrumb (AuthR _) = return ("Login", Just HomeR)
   breadcrumb ProfileR = return ("Profile", Just HomeR)
-  breadcrumb PostR = return ("Add a post", Just HomeR)
-  breadcrumb (EntryR n) = return ("Entry #" ++ (pack . show $ n), Just HomeR)
+  breadcrumb PostR = return ("Add a entry", Just HomeR)
+  breadcrumb (EntryR n) = return ("Entry #" ++ showKey n, Just HomeR)
   breadcrumb  _ = return ("home", Nothing)
 
 -- How to run database actions.
@@ -249,9 +250,9 @@ instance YesodAuth App where
 
     -- You can add other plugins like Google Email, email or OAuth here
     authPlugins app = [ authGoogleEmailSaveToken (googleClient $ appSettings app) (googleSecret $ appSettings app)
-                      ] ++ extraAuthPlugins
+                      ] -- ++ extraAuthPlugins
         -- Enable authDummy login if enabled.
-        where extraAuthPlugins = [authDummy | appAuthDummyLogin $ appSettings app]
+        -- where extraAuthPlugins = [authDummy | appAuthDummyLogin $ appSettings app]
 
     authHttpManager = getHttpManager
 

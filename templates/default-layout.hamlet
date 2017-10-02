@@ -64,3 +64,8 @@ $maybe msg <- mmsg
     <div .content.has-text-centered>
       <p>
         #{appCopyright $ appSettings master}
+
+<div #modal.modal>
+  <div .modal-background>
+  <div .modal-content>
+  <button .modal-close.is-large aria-label=close>

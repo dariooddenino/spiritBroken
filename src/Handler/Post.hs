@@ -4,35 +4,23 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE FlexibleContexts #-}
 module Handler.Post where
 
 import Import
--- import Control.Monad.Catch (catch)
--- import qualified Database.Esqueleto as E
--- import Database.Esqueleto ((^.))
+import qualified Database.Esqueleto as E
+import Database.Esqueleto ((^.))
+import Data.Time (getCurrentTime)
 
--- Entry json
---     userId UserId
---     url Text
---     UniqueEntry
-
-
---     deriving Eq
---     deriving Show
-
--- bTextField :: Field Handler Text
--- bTextField = Field
---   { fieldEnctype = UrlEncoded
---   , fieldView = \idAttr nameAttr otherAttrs eResult isReq ->
---       [whamlet|
---         <input id=#{idAttr} name=#{nameAttr} *{otherAttrs} type=text>
---       |]
---   }
-
--- postFormA :: UserId -> Form Entry
--- postFormA userId = renderDivs $ Entry
---   <$> pure userId
---   <*> areq textField "Url" Nothing
+titleSettings :: Text -> FieldSettings master
+titleSettings tid = FieldSettings
+  { fsLabel = "Title"
+  , fsAttrs = [ ("placeholder", "Enter a title")
+              , ("class", "input is-large") ]
+  , fsTooltip = Nothing
+  , fsName = Just "title"
+  , fsId = Just tid
+  }
 
 urlSettings :: Text -> FieldSettings master
 urlSettings fid = FieldSettings
@@ -47,11 +35,21 @@ urlSettings fid = FieldSettings
 postForm :: UserId -> Form Entry
 postForm userId extra = do
   fId <- newIdent
+  tId <- newIdent
   (urlRes, urlView) <- mreq textField (urlSettings fId) Nothing
-  let entryRes = Entry userId <$> urlRes
+  (titleRes, titleView) <- mreq textField (titleSettings tId) Nothing
+  time <- liftIO getCurrentTime
+  let entryRes = Entry userId False 0 0 time <$> titleRes <*> urlRes
   let widget = [whamlet|
     #{extra}
     <div .field>
+      <label .label>
+        ^{fvLabel titleView}
+      <div .control>
+        ^{fvInput titleView}
+    <div .field>
+      <label .label>
+        ^{fvLabel urlView}
       <div .control>
         ^{fvInput urlView}
   |]
@@ -68,6 +66,25 @@ getPostR = do
         $(widgetFile "post")
     Nothing -> defaultLayout ([whamlet|<p>unreachable?|])
 
+errorDisplay :: Widget -> Enctype -> Handler Html
+errorDisplay formWidget formEnctype = do
+  setErrorMessage "There was an error, please try again."
+  defaultLayout $ do
+    setTitle "Post an URL"
+    $(widgetFile "post")
+
+findAndRedirect :: Text -> Widget -> Enctype -> Handler Html
+findAndRedirect url formWidget formEnctype = do
+  -- entries <- runDB $ selectList [EntryUrl ==. url] []
+  entries <- runDB $ E.select $ E.from $ \e -> do
+    E.where_ (e ^. EntryUrl E.==. E.val url)
+    return e
+  case entries of
+    [] -> errorDisplay formWidget formEnctype
+    (Entity eid _ : _) -> do
+      setWarningMessage "The entry was already posted."
+      redirect $ EntryR eid
+
 postPostR :: Handler Html
 postPostR = do
   maid <- maybeAuthId
@@ -78,14 +95,10 @@ postPostR = do
         FormSuccess entry -> do
           eres <- try $ runDB $ insert entry
           case eres of
-            Left (SomeException _) -> defaultLayout $ do
-              setTitle "Post an url"
-              setErrorMessage "URL already posted!"
-              $(widgetFile "post")
-            Right _ -> do
-              redirect HomeR
-        _ -> defaultLayout $ do
-          setTitle "Post an URL"
-          setMessage $ "There was an error, please try again."
-          $(widgetFile "post")
+            Left (SomeException _) ->
+              findAndRedirect (entryUrl entry) formWidget formEnctype
+            Right eid -> do
+              setSuccessMessage "Entry added."
+              redirect $ EntryR eid
+        _ -> errorDisplay formWidget formEnctype
     Nothing -> defaultLayout ([whamlet|<p>unreachable?|])

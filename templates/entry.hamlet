@@ -1,0 +1,26 @@
+<article .media>
+  $if isImage
+    <figure .media-left>
+      <p .image.is-128x128.is-cover>
+        <img .is-clickable src="#{url}" onclick="modalImage('#{url}');">
+
+  <div .media-content>
+    <div .content>
+      <p>
+        <strong>#{title}</strong>
+        <br>
+        <a><small>johnsmith</small></a><small> @ #{show timeStamp}</small>
+        <br>
+        #{url}
+     <nav .level.is-mobile>
+       <div .level-left>
+         <span .level-item>
+           $if voted
+             <span .level-item>#{value}
+         <span .level-item>
+           <span>#{avgVote}
+         <span .level-item>
+           <span>#{numVotes}
+
+$maybe form <- mForm
+  ^{form}

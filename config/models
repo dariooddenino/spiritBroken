@@ -19,6 +19,11 @@ Comment json -- Adding "json" causes ToJSON and FromJSON instances to be derived
     deriving Show
 Entry json
     userId UserId
+    isImage Bool
+    avgVote Int
+    numVotes Int
+    timeStamp UTCTime
+    title Text
     url Text
     UniqueEntry url
     deriving Eq
@@ -27,7 +32,6 @@ Vote
     value Int
     entryId EntryId
     userId UserId
-    UniqueVote userId
     deriving Eq
     deriving Show
 
