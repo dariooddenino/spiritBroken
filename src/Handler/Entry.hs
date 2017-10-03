@@ -49,8 +49,9 @@ rangeSettings vId = FieldSettings
 voteForm :: EntryId -> UserId -> Form Vote
 voteForm entryId userId extra = do
   vId <- newIdent
+  time <- liftIO getCurrentTime
   (valueRes, valueView) <- mreq rangeField (rangeSettings vId) (Just 500)
-  let voteRes = (\v -> Vote v entryId userId) <$> valueRes
+  let voteRes = (\v -> Vote v entryId userId time) <$> valueRes
   let widget = [whamlet|
     #{extra}
     ^{fvInput valueView}
@@ -74,7 +75,7 @@ getVotes mid entryId = E.select $ E.from $ \v -> do
 
 getEntryR :: EntryId -> Handler Html
 getEntryR entryId = do
-  (Entry _ isImage avgVote numVotes numComments timeStamp title url) <- runDB $ get404 entryId
+  (Entry userId isImage avgVote numVotes numComments timeStamp title url) <- runDB $ get404 entryId
   maid <- maybeAuthId
   case maid of
     Nothing -> defaultLayout $ do
@@ -93,7 +94,7 @@ getEntryR entryId = do
               mForm = Just $ renderForm (EntryR entryId) formEnctype formWidget
           setPageTitle entryId
           $(widgetFile "entry")
-        (Entity _ (Vote value _ _): _) -> defaultLayout $ do
+        (Entity _ (Vote value _ _ _): _) -> defaultLayout $ do
           let voted = True
               mForm = Nothing :: Maybe Widget
           setPageTitle entryId
@@ -104,7 +105,7 @@ newAverage vote numVotes avgVote = (vote + (numVotes * avgVote )) `quot` (numVot
 
 postEntryR :: EntryId -> Handler Html
 postEntryR entryId = do
-  entry@(Entry _ isImage avgVote numVotes numComments timeStamp title url) <- runDB $ get404 entryId
+  entry@(Entry userId isImage avgVote numVotes numComments timeStamp title url) <- runDB $ get404 entryId
   maid <- maybeAuthId
   case maid of
     Just mid -> do

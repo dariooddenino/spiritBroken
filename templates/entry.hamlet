@@ -9,7 +9,7 @@
       <p>
         <strong>#{title}</strong>
         <br>
-        <a><small>johnsmith</small></a><small> @ #{show timeStamp}</small>
+        <a href="@{UserR userId}"><small>johnsmith</small></a><small> @ #{show timeStamp}</small>
         <br>
         #{url}
      <nav .level.is-mobile.has-text-weight-bold>

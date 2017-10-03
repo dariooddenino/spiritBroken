@@ -21,7 +21,7 @@ data FileForm = FileForm
     }
 
 displayEntry :: Entity Entry -> Maybe (Entity Vote) -> Widget
-displayEntry (Entity id (Entry _ isImage avgVote numVotes numComments timeStamp title url)) voteE = do
+displayEntry (Entity id (Entry userId isImage avgVote numVotes numComments timeStamp title url)) voteE = do
   let mValue = case voteE of
         Nothing -> Nothing
         Just (Entity _ m) -> Just $ voteValue m
@@ -29,7 +29,7 @@ displayEntry (Entity id (Entry _ isImage avgVote numVotes numComments timeStamp 
 
 
 pagerLimit :: Int64
-pagerLimit = 1
+pagerLimit = 20
 getPage :: Maybe Text -> Int64
 getPage mpage = do
   let page = fromMaybe 1 $ (unpack <$> mpage) >>= readMaybe

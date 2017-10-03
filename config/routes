@@ -10,3 +10,4 @@
 
 /post PostR GET POST
 /e/#EntryId EntryR GET POST
+/u/#UserId UserR GET

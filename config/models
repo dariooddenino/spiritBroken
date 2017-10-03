@@ -6,12 +6,9 @@ User
     averageVote Int
     name Text Maybe
     image Text Maybe
+    signupTime UTCTime
+    lastSeen UTCTime
     deriving Typeable
-Email
-    email Text
-    userId UserId Maybe
-    verkey Text Maybe
-    UniqueEmail email
 Comment json -- Adding "json" causes ToJSON and FromJSON instances to be derived.
     message Text
     userId UserId Maybe
@@ -33,6 +30,7 @@ Vote
     value Int
     entryId EntryId
     userId UserId
+    timeStamp UTCTime
     deriving Eq
     deriving Show
 

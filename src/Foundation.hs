@@ -102,11 +102,6 @@ instance Yesod App where
         -- Define the menu items of the header.
         let menuItems =
                 [ NavbarLeft $ MenuItem
-                    { menuItemLabel = "Home"
-                    , menuItemRoute = HomeR
-                    , menuItemAccessCallback = True
-                    }
-                , NavbarLeft $ MenuItem
                   { menuItemLabel = "Add entry"
                   , menuItemRoute = PostR
                   , menuItemAccessCallback = isJust muser
@@ -156,6 +151,7 @@ instance Yesod App where
     isAuthorized RobotsR _ = return Authorized
     isAuthorized (StaticR _) _ = return Authorized
     isAuthorized (EntryR _) False = return Authorized
+    isAuthorized (UserR _) _ = return Authorized
 
     isAuthorized ProfileR _ = isAuthenticated
     isAuthorized PostR _ = isAuthenticated
@@ -197,6 +193,7 @@ instance YesodBreadcrumbs App where
   breadcrumb PostR = return ("Add a entry", Just HomeR)
   breadcrumb (EntryR n) = return ("Entry #" ++ showKey n, Just HomeR)
   breadcrumb  _ = return ("home", Nothing)
+  breadcrumb (UserR n) = return ("User #" ++ showKey n, Just HomeR)
 
 -- How to run database actions.
 instance YesodPersist App where
@@ -234,6 +231,7 @@ instance YesodAuth App where
 
     authenticate creds = runDB $ do
         x <- getBy $ UniqueUser $ credsIdent creds
+        time <- liftIO getCurrentTime
         case x of
             Just (Entity uid _) -> return $ Authenticated uid
             Nothing -> do
@@ -246,6 +244,8 @@ instance YesodAuth App where
                 , userAverageVote = 0
                 , userName = person >>= personName >>= nameFormatted
                 , userImage = imageUri <$> (person >>= personImage)
+                , userSignupTime = time
+                , userLastSeen = time
                 }
 
     -- You can add other plugins like Google Email, email or OAuth here

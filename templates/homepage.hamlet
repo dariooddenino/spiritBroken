@@ -43,18 +43,8 @@
         <h2 .is-size-1>Nothing yet
     $forall (entryE, voteE) <- entriesNVotes
       ^{displayEntry entryE voteE}
-    <!-- $forall (Entity id (Entry _ isImage avgVote numVotes timeStamp title url), Entity _ (Vote) <- entries -->
-    <!--   ^{displayEntry id isImage avgVote numVotes timeStamp title url} -->
 
     <div .buffer>
 
-    <!-- <nav .pagination role="navigation" aria-label="pagination"> -->
-    <!--   <a .pagination-previous>Previous -->
-    <!--   <a .pagination-next>Next page -->
-    <!--   <ul .pagination-list> -->
-    <!--     <li> -->
-    <!--       <a .pagination-link aria-label="Goto page 1">1 -->
-    <!--     <li> -->
-    <!--       <span .pagination-ellipsis>&hellip; -->
     $if E.unValue numEntries > 0
       ^{pager (E.unValue numEntries) pagerLimit page}
