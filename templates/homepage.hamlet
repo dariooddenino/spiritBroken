@@ -1,4 +1,4 @@
-<nav .level>
+<nav .level.is-mobile>
   <div .level-item.has-text-centered>
     <div>
       <p .heading>Users
@@ -18,36 +18,43 @@
 
 <div .columns>
 
-  <div .column.is-one-quarter>
-    <nav .panel>
-      <p .panel-heading.is-uppercase>
-        filter & sort
-      <p .panel-tabs>
-        <a .is-active>all
-        <a>public
-        <a>private
-      <a .panel-block>
-        <span .panel-icon>
-          <i .fa.fa-book>
-        test
-      <a .panel-block>
-        <span .panel-icon>
-          <i .fa.fa-book>
-        test2
-      <div .panel-block>
-        <button .button.is-primary.is-outlined.is-fullwidth>reset
+  <!-- <div .column.is-one-quarter> -->
+  <!--   <nav .panel> -->
+  <!--     <p .panel-heading.is-uppercase> -->
+  <!--       filter & sort -->
+  <!--     <p .panel-tabs> -->
+  <!--       <a .is-active>all -->
+  <!--       <a>public -->
+  <!--       <a>private -->
+  <!--     <a .panel-block> -->
+  <!--       <span .panel-icon> -->
+  <!--         <i .fa.fa-book> -->
+  <!--       test -->
+  <!--     <a .panel-block> -->
+  <!--       <span .panel-icon> -->
+  <!--         <i .fa.fa-book> -->
+  <!--       test2 -->
+  <!--     <div .panel-block> -->
+  <!--       <button .button.is-primary.is-outlined.is-fullwidth>reset -->
 
   <div .column>
-    $forall Entity id (Entry _ isImage avgVote numVotes timeStamp title url) <- entries
-      ^{displayEntry id isImage avgVote numVotes timeStamp title url}
+    $if E.unValue numEntries == 0
+      <div .has-text-centered>
+        <h2 .is-size-1>Nothing yet
+    $forall (entryE, voteE) <- entriesNVotes
+      ^{displayEntry entryE voteE}
+    <!-- $forall (Entity id (Entry _ isImage avgVote numVotes timeStamp title url), Entity _ (Vote) <- entries -->
+    <!--   ^{displayEntry id isImage avgVote numVotes timeStamp title url} -->
 
     <div .buffer>
 
-    <nav .pagination role="navigation" aria-label="pagination">
-      <a .pagination-previous>Previous
-      <a .pagination-next>Next page
-      <ul .pagination-list>
-        <li>
-          <a .pagination-link aria-label="Goto page 1">1
-        <li>
-          <span .pagination-ellipsis>&hellip;
+    <!-- <nav .pagination role="navigation" aria-label="pagination"> -->
+    <!--   <a .pagination-previous>Previous -->
+    <!--   <a .pagination-next>Next page -->
+    <!--   <ul .pagination-list> -->
+    <!--     <li> -->
+    <!--       <a .pagination-link aria-label="Goto page 1">1 -->
+    <!--     <li> -->
+    <!--       <span .pagination-ellipsis>&hellip; -->
+    $if E.unValue numEntries > 0
+      ^{pager (E.unValue numEntries) pagerLimit page}

@@ -250,9 +250,9 @@ instance YesodAuth App where
 
     -- You can add other plugins like Google Email, email or OAuth here
     authPlugins app = [ authGoogleEmailSaveToken (googleClient $ appSettings app) (googleSecret $ appSettings app)
-                      ] -- ++ extraAuthPlugins
+                      ] ++ extraAuthPlugins
         -- Enable authDummy login if enabled.
-        -- where extraAuthPlugins = [authDummy | appAuthDummyLogin $ appSettings app]
+        where extraAuthPlugins = [authDummy | appAuthDummyLogin $ appSettings app]
 
     authHttpManager = getHttpManager
 

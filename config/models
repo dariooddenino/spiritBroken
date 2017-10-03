@@ -22,6 +22,7 @@ Entry json
     isImage Bool
     avgVote Int
     numVotes Int
+    numComments Int
     timeStamp UTCTime
     title Text
     url Text

@@ -6,10 +6,13 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE QuasiQuotes #-}
 module Handler.Home where
 
 import Import
+import Text.Read (readMaybe)
 import qualified Database.Esqueleto as E
+import Database.Esqueleto ((^.))
 
 -- Define our data that will be used for creating the form.
 data FileForm = FileForm
@@ -17,18 +20,63 @@ data FileForm = FileForm
     , fileDescription :: Text
     }
 
-displayEntry id isImage avgVote numVotes timeStamp title url = $(widgetFile "entry-line")
+displayEntry :: Entity Entry -> Maybe (Entity Vote) -> Widget
+displayEntry (Entity id (Entry _ isImage avgVote numVotes numComments timeStamp title url)) voteE = do
+  let mValue = case voteE of
+        Nothing -> Nothing
+        Just (Entity _ m) -> Just $ voteValue m
+  $(widgetFile "entry-line")
 
--- This is a handler function for the GET request method on the HomeR
--- resource pattern. All of your resource patterns are defined in
--- config/routes
---
--- The majority of the code you will write in Yesod lives in these handler
--- functions. You can spread them across multiple files if you are so
--- inclined, or create a single monolithic file.
+
+pagerLimit :: Int64
+pagerLimit = 1
+getPage :: Maybe Text -> Int64
+getPage mpage = do
+  let page = fromMaybe 1 $ (unpack <$> mpage) >>= readMaybe
+  if page >= 0
+    then page
+    else 0
+
+--   n = 50
+--   l = 17
+
+
+ceilPages :: Int -> Int -> Int
+ceilPages n l = case rem n l of
+  0 -> quot n l
+  _ -> quot n l + 1
+
+pager :: Int -> Int64 -> Int64 -> Widget
+pager n l c = do
+  let cantPrev = c <= 1
+      cantNext = fromIntegral (c*l) >= n
+      pages = [1..(ceilPages n (fromIntegral l))]
+  [whamlet|
+  <nav .pagination role="navigation" aria-label="pagination">
+    <a .pagination-previous :cantPrev:disabled href=@{HomeR}?page=#{c - 1}>Newer
+    <a .pagination-next :cantNext:disabled href=@{HomeR}?page=#{c + 1}>Older
+    <ul class="pagination-list">
+      $forall page <- pages
+        <li>
+          <a .pagination-link :page == fromIntegral(c):.is-current href="@{HomeR}?page=#{page}" aria-label="Page #{page}">
+            #{page}
+|]
+-- displayPager :: Widget
+-- displayPager n l c= $(widgetFile "pager")
+-- a -> m b   -> m a  -> m b
+
 getHomeR :: Handler Html
 getHomeR = do
-  entries :: [Entity Entry] <- runDB $ selectList [] []
+  maid <- maybeAuthId
+  page <- getPage <$> lookupGetParam "page"
+  entriesNVotes :: [(Entity Entry, Maybe (Entity Vote))] <- runDB $ E.select $
+    E.from $ \(e `E.LeftOuterJoin` v) -> do
+      E.on $ (E.just (e ^. EntryId) E.==. v E.?. VoteEntryId) E.&&.
+        (v E.?. VoteUserId) E.==. E.val maid
+      E.orderBy [E.desc (e ^. EntryTimeStamp)]
+      E.limit pagerLimit
+      E.offset ((page - 1) * pagerLimit)
+      return (e, v)
   (numUsers:_) :: [E.Value Int] <- runDB $
     E.select . E.from $ \(_ :: E.SqlExpr (Entity User)) -> return E.countRows
   (numEntries:_) :: [E.Value Int] <- runDB $
@@ -40,30 +88,3 @@ getHomeR = do
   defaultLayout $ do
     setTitle "SpiritBroken!"
     $(widgetFile "homepage")
-
-postHomeR :: Handler Html
-postHomeR = getHomeR
--- postHomeR = do
---   entries :: [Entity Entry] <- runDB $ selectList [] []
---   defaultLayout $ do
---     setTitle "SpiritBroken"
---     $(widgetFile "homepage")
-
--- sampleForm :: Form FileForm
--- sampleForm = renderBootstrap3 BootstrapBasicForm $ FileForm
---     <$> fileAFormReq "Choose a file"
---     <*> areq textField textSettings Nothing
---     -- Add attributes like the placeholder and CSS classes.
---     where textSettings = FieldSettings
---             { fsLabel = "What's on the file?"
---             , fsTooltip = Nothing
---             , fsId = Nothing
---             , fsName = Nothing
---             , fsAttrs =
---                 [ ("class", "form-control")
---                 , ("placeholder", "File description")
---                 ]
---             }
-
--- commentIds :: (Text, Text, Text)
--- commentIds = ("js-commentForm", "js-createCommentTextarea", "js-commentList")

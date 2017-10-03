@@ -48,6 +48,8 @@ dependencies:
 - esqueleto
 - exceptions
 - transformers
+- regex-with-pcre
+- regex
 
 # The library contains all of our application code. The executable
 # defined below is just a thin wrapper.

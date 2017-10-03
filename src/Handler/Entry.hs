@@ -63,7 +63,7 @@ renderForm route enctype widget = [whamlet|
     <div .column>
       <form method=post action=@{route} enctype=#{enctype}>
         ^{widget}
-        <button .button>Vote
+        <button .button.is-fullwidth.is-dark>Vote
 |]
 
 getVotes :: (SqlSelect a (Entity Vote), MonadIO m) => Key User -> Key Entry -> E.SqlReadT m [Entity Vote]
@@ -74,7 +74,7 @@ getVotes mid entryId = E.select $ E.from $ \v -> do
 
 getEntryR :: EntryId -> Handler Html
 getEntryR entryId = do
-  (Entry _ isImage avgVote numVotes timeStamp title url) <- runDB $ get404 entryId
+  (Entry _ isImage avgVote numVotes numComments timeStamp title url) <- runDB $ get404 entryId
   maid <- maybeAuthId
   case maid of
     Nothing -> defaultLayout $ do
@@ -99,9 +99,12 @@ getEntryR entryId = do
           setPageTitle entryId
           $(widgetFile "entry")
 
+newAverage :: Int -> Int -> Int -> Int
+newAverage vote numVotes avgVote = (vote + (numVotes * avgVote )) `quot` (numVotes + 1)
+
 postEntryR :: EntryId -> Handler Html
 postEntryR entryId = do
-  (Entry _ isImage avgVote numVotes timeStamp title url) <- runDB $ get404 entryId
+  entry@(Entry _ isImage avgVote numVotes numComments timeStamp title url) <- runDB $ get404 entryId
   maid <- maybeAuthId
   case maid of
     Just mid -> do
@@ -109,17 +112,31 @@ postEntryR entryId = do
       case result of
         FormSuccess vote -> do
           votes <- runDB $ getVotes mid entryId
+          liftIO $ print "QUI"
           case votes of
             [] -> do
-              _ <- runDB $ insert vote
+              let numVotes = entryNumVotes entry + 1
+                  avgVote = (voteValue vote + (entryAvgVote entry * entryNumVotes entry)) `quot` numVotes
+              _ <- runDB $ do
+                insert vote
+                update entryId [ EntryNumVotes =. numVotes
+                               , EntryAvgVote =. avgVote
+                               ]
               setSuccessMessage "Vote successfully added."
-            _ -> setWarningMessage "Already voted."
-          defaultLayout $ do
-            let voted = True
-                value = voteValue vote
-                mForm = Nothing :: Maybe Widget
-            setPageTitle entryId
-            $(widgetFile "entry")
+              defaultLayout $ do
+                let voted = True
+                    value = voteValue vote
+                    mForm = Nothing :: Maybe Widget
+                setPageTitle entryId
+                $(widgetFile "entry")
+            _ -> do
+              setWarningMessage "Already voted."
+              defaultLayout $ do
+                let voted = True
+                    value = voteValue vote
+                    mForm = Nothing :: Maybe Widget
+                setPageTitle entryId
+                $(widgetFile "entry")
         _ -> do
           setErrorMessage "There was an error with your vote, please try again."
           defaultLayout $ do

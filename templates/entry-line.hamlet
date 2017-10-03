@@ -14,9 +14,23 @@
         <a><small>johnsmith</small></a><small> @ #{show timeStamp}</small>
         <br>
         #{url}
-     <nav .level.is-mobile>
+     <nav .level.is-mobile.has-text-weight-bold>
        <div .level-left>
-         <span .level-item>
-           <span .icon.is-small>
-             <i .fa.fa-graduation-cap>
-           #{avgVote}
+           $maybe value <- mValue
+             <p .level-item.has-text-success title="Your vote">
+               <span .icon>
+                 <i .fa.fa-graduation-cap>
+               <span>#{value}
+
+           <p .level-item title="Average vote">
+             <span .icon>
+               <i .fa.fa-balance-scale>
+             <span>#{avgVote}
+           <p .level-item title="Number of votes">
+             <span .icon>
+               <i .fa.fa-calculator>
+             <span>#{numVotes}
+           <p .level-item title="Number of comments">
+             <span .icon>
+               <i .fa.fa-comments-o>
+             <span>#{numComments}

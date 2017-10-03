@@ -1,6 +1,6 @@
 <nav .navbar.is-warning.is-bold role="navigation" aria-label="main navigation">
   <div .navbar-brand>
-    <a .navbar-item href="//">
+    <a .navbar-item href="@{HomeR}">
       <h1 #site-logo .is-size-3>SpiritBroken
 
     <div .burger.navbar-burger data-target="navMenu">

@@ -11,6 +11,7 @@ import Import
 import qualified Database.Esqueleto as E
 import Database.Esqueleto ((^.))
 import Data.Time (getCurrentTime)
+import Text.RE.TDFA.String
 
 titleSettings :: Text -> FieldSettings master
 titleSettings tid = FieldSettings
@@ -39,7 +40,7 @@ postForm userId extra = do
   (urlRes, urlView) <- mreq textField (urlSettings fId) Nothing
   (titleRes, titleView) <- mreq textField (titleSettings tId) Nothing
   time <- liftIO getCurrentTime
-  let entryRes = Entry userId False 0 0 time <$> titleRes <*> urlRes
+  let entryRes = Entry userId False 0 0 0 time <$> titleRes <*> urlRes
   let widget = [whamlet|
     #{extra}
     <div .field>
@@ -85,6 +86,8 @@ findAndRedirect url formWidget formEnctype = do
       setWarningMessage "The entry was already posted."
       redirect $ EntryR eid
 
+isImg s = matched $ s ?=~ [reBI|\.(jpg|png|gif)|]
+
 postPostR :: Handler Html
 postPostR = do
   maid <- maybeAuthId
@@ -93,7 +96,7 @@ postPostR = do
       ((result, formWidget), formEnctype) <- runFormPost $  postForm mid
       case result of
         FormSuccess entry -> do
-          eres <- try $ runDB $ insert entry
+          eres <- try $ runDB $ insert $ entry { entryIsImage = isImg (unpack $ entryUrl entry)}
           case eres of
             Left (SomeException _) ->
               findAndRedirect (entryUrl entry) formWidget formEnctype

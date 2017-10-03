@@ -1,4 +1,4 @@
 <form method=post action=@{PostR} enctype=#{formEnctype}>
   ^{formWidget}
 
-  <button .button.is-large>Submit
+  <button .button.is-fullwidth.is-large.is-dark>Submit
