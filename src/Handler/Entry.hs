@@ -14,7 +14,21 @@ import Database.Esqueleto.Internal.Sql (SqlSelect)
 import qualified Data.Text.Read
 import Text.Julius (juliusFile)
 
-rangeField :: (Monad m, Integral i, RenderMessage (HandlerSite m) FormMessage) => Field m i
+
+data FormAndHandler = forall a. FormAndHandler (Form a) (FormResult a -> Widget -> Enctype -> Widget)
+
+runMultipleFormsPost :: [FormAndHandler] -> Widget
+runMultipleFormsPost [] = return ()
+runMultipleFormsPost (FormAndHandler form handler : t) = do
+  ((res, widget), enctype) <- handlerToWidget $ runFormPost form
+  case res of
+    FormMissing ->
+      runMultipleFormsPost t
+    _ ->
+      handler res widget enctype
+
+-- rangeField :: (Monad m, Integral i, RenderMessage (HandlerSite m) FormMessage) => Field m i
+rangeField :: Field Handler Int
 rangeField = Field
   { fieldParse = parseHelper $ \s ->
       case Data.Text.Read.signed Data.Text.Read.decimal s of
@@ -58,13 +72,60 @@ voteForm entryId userId extra = do
   |]
   return (voteRes, widget)
 
-renderForm :: Route App -> Enctype -> Widget -> Widget
-renderForm route enctype widget = [whamlet|
+renderVoteForm :: Route App -> Enctype -> Widget -> Widget
+renderVoteForm route enctype widget = [whamlet|
   <div .columns>
     <div .column>
       <form method=post action=@{route} enctype=#{enctype}>
         ^{widget}
         <button .button.is-fullwidth.is-dark>Vote
+|]
+
+areaField :: Field Handler Text
+areaField = Field
+  { fieldParse = parseHelper $ Right
+  , fieldView = \theId name attrs val isReq ->
+      [whamlet|
+        $newline never
+        <textarea id="#{theId}" name="#{name}" *{attrs} :isReq:required="">
+      |]
+  , fieldEnctype = UrlEncoded
+  }
+
+
+areaSettings :: Text -> FieldSettings App
+areaSettings id = FieldSettings
+  { fsLabel = "Add a comment"
+  , fsName = Just "comment"
+  , fsId = Just id
+  , fsTooltip = Nothing
+  , fsAttrs = [ ("class", "textarea")
+              , ("placeholder", "Write something...")
+              ]}
+
+
+commentForm :: EntryId -> UserId -> Form Comment
+commentForm entryId userId extra = do
+  id <- newIdent
+  time <- liftIO getCurrentTime
+  (messageRes, messageView) <- mreq areaField (areaSettings id) Nothing
+  let comment = (\c -> Comment c userId entryId) <$> messageRes
+  let widget = [whamlet|
+    #{extra}
+    ^{fvInput messageView}
+  |]
+  return (comment, widget)
+
+renderCommentForm :: Route App -> Enctype -> Widget -> Widget
+renderCommentForm route enctype widget = [whamlet|
+  <div .columns>
+    <div .column>
+      <form method=post action=@{route} enctype=#{enctype}>
+        ^{widget}
+        <nav .level>
+          <div .level-left>
+            <div .level-item>
+              <button .button.is-fullwidth.is-dark>Comment
 |]
 
 getVotes :: (SqlSelect a (Entity Vote), MonadIO m) => Key User -> Key Entry -> E.SqlReadT m [Entity Vote]
@@ -86,21 +147,25 @@ getEntryR entryId = do
       let value = 0 :: Int
           voted = False
           mForm = Nothing :: Maybe Widget
+          mCForm = Nothing :: Maybe Widget
       setPageTitle entryId
       $(widgetFile "entry")
     Just mid -> do
       (formWidget, formEnctype) <- generateFormPost $ voteForm entryId mid
+      (comWidget, comEnctype) <- generateFormPost $ commentForm entryId mid
       votes <- runDB $ getVotes mid entryId
       case votes of
         [] -> defaultLayout $ do
           let value = 0 :: Int
               voted = False
-              mForm = Just $ renderForm (EntryR entryId) formEnctype formWidget
+              mForm = Just $ renderVoteForm (EntryR entryId) formEnctype formWidget
+              mCForm = Just $ renderCommentForm (EntryR entryId) comEnctype comWidget
           setPageTitle entryId
           $(widgetFile "entry")
         (Entity _ (Vote value _ _ _): _) -> defaultLayout $ do
           let voted = True
               mForm = Nothing :: Maybe Widget
+              mCForm = Nothing :: Maybe Widget
           setPageTitle entryId
           $(widgetFile "entry")
 
@@ -118,24 +183,27 @@ postEntryR entryId = do
   case maid of
     Just mid -> do
       ((result, formWidget), formEnctype) <- runFormPost $ voteForm entryId mid
+      ((cResult, comWidget), comEnctype) <- runFormPost $ commentForm entryId mid
       case result of
         FormSuccess vote -> do
+          liftIO $ print $ "VOTE SUCCESS: " <> (show vote)
           votes <- runDB $ getVotes mid entryId
           liftIO $ print "QUI"
           case votes of
             [] -> do
               let numVotes = entryNumVotes entry + 1
                   avgVote = (voteValue vote + (entryAvgVote entry * entryNumVotes entry)) `quot` numVotes
-              _ <- runDB $ do
-                insert vote
-                update entryId [ EntryNumVotes =. numVotes
-                               , EntryAvgVote =. avgVote
-                               ]
+              -- _ <- runDB $ do
+              --   insert vote
+              --   update entryId [ EntryNumVotes =. numVotes
+              --                  , EntryAvgVote =. avgVote
+              --                  ]
               setSuccessMessage "Vote successfully added."
               defaultLayout $ do
                 let voted = True
                     value = voteValue vote
                     mForm = Nothing :: Maybe Widget
+                    mCForm = Nothing :: Maybe Widget
                 setPageTitle entryId
                 $(widgetFile "entry")
             _ -> do
@@ -144,6 +212,7 @@ postEntryR entryId = do
                 let voted = True
                     value = voteValue vote
                     mForm = Nothing :: Maybe Widget
+                    mCForm = Nothing :: Maybe Widget
                 setPageTitle entryId
                 $(widgetFile "entry")
         _ -> do
@@ -151,7 +220,8 @@ postEntryR entryId = do
           defaultLayout $ do
             let value = 0 :: Int
                 voted = False
-                mForm = Just $ renderForm (EntryR entryId) formEnctype formWidget
+                mForm = Just $ renderVoteForm (EntryR entryId) formEnctype formWidget
+                mCForm = Nothing :: Maybe Widget
             setTitle $ toHtml $ "Entry #" ++ showKey entryId
             $(widgetFile "entry")
     Nothing -> do
@@ -160,6 +230,7 @@ postEntryR entryId = do
         let value = 0 :: Int
             voted = False
             mForm = Nothing :: Maybe Widget
+            mCForm = Nothing :: Maybe Widget
         setPageTitle entryId
         $(widgetFile "entry")
 

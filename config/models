@@ -9,9 +9,10 @@ User
     signupTime UTCTime
     lastSeen UTCTime
     deriving Typeable
-Comment json -- Adding "json" causes ToJSON and FromJSON instances to be derived.
+Comment
     message Text
-    userId UserId Maybe
+    userId UserId
+    entryId EntryId
     deriving Eq
     deriving Show
 Entry json

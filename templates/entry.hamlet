@@ -37,3 +37,8 @@
 
 $maybe form <- mForm
   ^{form}
+
+$maybe cForm <- mCForm
+  <article .media>
+    <div .media-content>
+      ^{cForm}
