@@ -58,14 +58,11 @@ postForm userId extra = do
 
 getPostR :: Handler Html
 getPostR = do
-  maid <- maybeAuthId
-  case maid of
-    Just mid -> do
-      (formWidget, formEnctype) <- generateFormPost $ postForm mid
-      defaultLayout $ do
-        setTitle "Post an URL"
-        $(widgetFile "post")
-    Nothing -> defaultLayout ([whamlet|<p>unreachable?|])
+  (uid, _) <- requireAuthPair
+  (formWidget, formEnctype) <- generateFormPost $ postForm uid
+  defaultLayout $ do
+    setTitle "Post an URL"
+    $(widgetFile "post")
 
 errorDisplay :: Widget -> Enctype -> Handler Html
 errorDisplay formWidget formEnctype = do
@@ -76,7 +73,6 @@ errorDisplay formWidget formEnctype = do
 
 findAndRedirect :: Text -> Widget -> Enctype -> Handler Html
 findAndRedirect url formWidget formEnctype = do
-  -- entries <- runDB $ selectList [EntryUrl ==. url] []
   entries <- runDB $ E.select $ E.from $ \e -> do
     E.where_ (e ^. EntryUrl E.==. E.val url)
     return e
@@ -86,22 +82,20 @@ findAndRedirect url formWidget formEnctype = do
       setWarningMessage "The entry was already posted."
       redirect $ EntryR eid
 
+isImg :: String -> Bool
 isImg s = matched $ s ?=~ [reBI|\.(jpg|png|gif)|]
 
 postPostR :: Handler Html
 postPostR = do
-  maid <- maybeAuthId
-  case maid of
-    Just mid -> do
-      ((result, formWidget), formEnctype) <- runFormPost $  postForm mid
-      case result of
-        FormSuccess entry -> do
-          eres <- try $ runDB $ insert $ entry { entryIsImage = isImg (unpack $ entryUrl entry)}
-          case eres of
-            Left (SomeException _) ->
-              findAndRedirect (entryUrl entry) formWidget formEnctype
-            Right eid -> do
-              setSuccessMessage "Entry added."
-              redirect $ EntryR eid
-        _ -> errorDisplay formWidget formEnctype
-    Nothing -> defaultLayout ([whamlet|<p>unreachable?|])
+  (uid, _) <- requireAuthPair
+  ((result, formWidget), formEnctype) <- runFormPost $  postForm uid
+  case result of
+    FormSuccess entry -> do
+      eres <- try $ runDB $ insert $ entry { entryIsImage = isImg (unpack $ entryUrl entry)}
+      case eres of
+        Left (SomeException _) ->
+          findAndRedirect (entryUrl entry) formWidget formEnctype
+        Right eid -> do
+          setSuccessMessage "Entry added."
+          redirect $ EntryR eid
+    _ -> errorDisplay formWidget formEnctype

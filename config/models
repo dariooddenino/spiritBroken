@@ -13,6 +13,7 @@ Comment
     message Text
     userId UserId
     entryId EntryId
+    timeStamp UTCTime
     deriving Eq
     deriving Show
 Entry json

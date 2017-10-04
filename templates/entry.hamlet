@@ -14,7 +14,7 @@
         #{url}
      <nav .level.is-mobile.has-text-weight-bold>
        <div .level-left>
-         $if voted
+         $maybe value <- mvote
            <p .level-item.has-text-success title="Your vote">
              <span .icon>
                <i .fa.fa-graduation-cap>
@@ -35,10 +35,5 @@
 
 <div .buffer>
 
-$maybe form <- mForm
-  ^{form}
-
-$maybe cForm <- mCForm
-  <article .media>
-    <div .media-content>
-      ^{cForm}
+^{mvForm}
+^{mcForm}

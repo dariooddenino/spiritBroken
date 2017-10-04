@@ -9,5 +9,6 @@
 /profile ProfileR GET POST
 
 /post PostR GET POST
-/e/#EntryId EntryR GET POST
+/e/#EntryId EntryR GET
 /u/#UserId UserR GET
+/e/#EntryId/mod EntryModR POST
