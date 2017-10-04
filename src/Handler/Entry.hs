@@ -76,6 +76,10 @@ getVotes mid entryId = E.select $ E.from $ \v -> do
 getEntryR :: EntryId -> Handler Html
 getEntryR entryId = do
   (Entry userId isImage avgVote numVotes numComments timeStamp title url) <- runDB $ get404 entryId
+  mUser <- runDB $ get userId
+  name <- case mUser of
+    Just n -> pure $ userName n
+    Nothing -> notFound
   maid <- maybeAuthId
   case maid of
     Nothing -> defaultLayout $ do
@@ -106,6 +110,10 @@ newAverage vote numVotes avgVote = (vote + (numVotes * avgVote )) `quot` (numVot
 postEntryR :: EntryId -> Handler Html
 postEntryR entryId = do
   entry@(Entry userId isImage avgVote numVotes numComments timeStamp title url) <- runDB $ get404 entryId
+  mUser <- runDB $ get userId
+  name <- case mUser of
+    Just n -> pure $ userName n
+    Nothing -> notFound
   maid <- maybeAuthId
   case maid of
     Just mid -> do

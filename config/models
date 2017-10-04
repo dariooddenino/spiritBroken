@@ -4,7 +4,7 @@ User
     UniqueUser ident
     numEntries Int
     averageVote Int
-    name Text Maybe
+    name Text
     image Text Maybe
     signupTime UTCTime
     lastSeen UTCTime

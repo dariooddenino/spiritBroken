@@ -16,33 +16,15 @@
       <p .heading>Comments
       <p .title>#{E.unValue numComments}
 
+$if E.unValue numEntries == 0
+  <section .hero>
+    <div .hero-body>
+      <p .title.has-text-centered>Nothing yet!
+
 <div .columns>
-
-  <!-- <div .column.is-one-quarter> -->
-  <!--   <nav .panel> -->
-  <!--     <p .panel-heading.is-uppercase> -->
-  <!--       filter & sort -->
-  <!--     <p .panel-tabs> -->
-  <!--       <a .is-active>all -->
-  <!--       <a>public -->
-  <!--       <a>private -->
-  <!--     <a .panel-block> -->
-  <!--       <span .panel-icon> -->
-  <!--         <i .fa.fa-book> -->
-  <!--       test -->
-  <!--     <a .panel-block> -->
-  <!--       <span .panel-icon> -->
-  <!--         <i .fa.fa-book> -->
-  <!--       test2 -->
-  <!--     <div .panel-block> -->
-  <!--       <button .button.is-primary.is-outlined.is-fullwidth>reset -->
-
   <div .column>
-    $if E.unValue numEntries == 0
-      <div .has-text-centered>
-        <h2 .is-size-1>Nothing yet
-    $forall (entryE, voteE) <- entriesNVotes
-      ^{displayEntry entryE voteE}
+    $forall (entryE, voteE, userE) <- entriesNVotes
+      ^{displayEntry entryE voteE userE}
 
     <div .buffer>
 

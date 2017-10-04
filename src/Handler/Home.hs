@@ -20,11 +20,12 @@ data FileForm = FileForm
     , fileDescription :: Text
     }
 
-displayEntry :: Entity Entry -> Maybe (Entity Vote) -> Widget
-displayEntry (Entity id (Entry userId isImage avgVote numVotes numComments timeStamp title url)) voteE = do
+displayEntry :: Entity Entry -> Maybe (Entity Vote) -> Entity User -> Widget
+displayEntry (Entity id (Entry userId isImage avgVote numVotes numComments timeStamp title url)) voteE (Entity _ user) = do
   let mValue = case voteE of
         Nothing -> Nothing
         Just (Entity _ m) -> Just $ voteValue m
+      name = userName user
   $(widgetFile "entry-line")
 
 
@@ -61,30 +62,37 @@ pager n l c = do
           <a .pagination-link :page == fromIntegral(c):.is-current href="@{HomeR}?page=#{page}" aria-label="Page #{page}">
             #{page}
 |]
--- displayPager :: Widget
--- displayPager n l c= $(widgetFile "pager")
--- a -> m b   -> m a  -> m b
 
 getHomeR :: Handler Html
 getHomeR = do
   maid <- maybeAuthId
   page <- getPage <$> lookupGetParam "page"
-  entriesNVotes :: [(Entity Entry, Maybe (Entity Vote))] <- runDB $ E.select $
-    E.from $ \(e `E.LeftOuterJoin` v) -> do
-      E.on $ (E.just (e ^. EntryId) E.==. v E.?. VoteEntryId) E.&&.
-        (v E.?. VoteUserId) E.==. E.val maid
-      E.orderBy [E.desc (e ^. EntryTimeStamp)]
-      E.limit pagerLimit
-      E.offset ((page - 1) * pagerLimit)
-      return (e, v)
-  (numUsers:_) :: [E.Value Int] <- runDB $
-    E.select . E.from $ \(_ :: E.SqlExpr (Entity User)) -> return E.countRows
-  (numEntries:_) :: [E.Value Int] <- runDB $
-    E.select . E.from $ \(_ :: E.SqlExpr (Entity Entry)) -> return E.countRows
-  (numVotes:_) :: [E.Value Int] <- runDB $
-    E.select . E.from $ \(_ :: E.SqlExpr (Entity Vote)) -> return E.countRows
-  (numComments:_) :: [E.Value Int] <- runDB $
-    E.select . E.from $ \(_ :: E.SqlExpr (Entity Comment)) -> return E.countRows
+  (entriesNVotes, numUsers, numEntries, numVotes, numComments) <- runDB $ do
+    entriesNVotes <- E.select $
+      E.from $ \((e `E.LeftOuterJoin` v) `E.InnerJoin` u)-> do
+        E.on (e ^. EntryUserId E.==. u ^. UserId)
+        E.on $ (E.just (e ^. EntryId) E.==. v E.?. VoteEntryId) E.&&.
+          (v E.?. VoteUserId) E.==. E.val maid
+        E.orderBy [E.desc (e ^. EntryTimeStamp)]
+        E.limit pagerLimit
+        E.offset ((page - 1) * pagerLimit)
+        return (e, v, u)
+      -- E.from $ \(e `E.LeftOuterJoin` v) -> do
+      --   E.on $ (E.just (e ^. EntryId) E.==. v E.?. VoteEntryId) E.&&.
+      --     (v E.?. VoteUserId) E.==. E.val maid
+      --   E.orderBy [E.desc (e ^. EntryTimeStamp)]
+      --   E.limit pagerLimit
+      --   E.offset ((page - 1) * pagerLimit)
+      --   return (e, v)
+    (numUsers:_) :: [E.Value Int] <-
+      E.select . E.from $ \(_ :: E.SqlExpr (Entity User)) -> return E.countRows
+    (numEntries:_) :: [E.Value Int] <-
+      E.select . E.from $ \(_ :: E.SqlExpr (Entity Entry)) -> return E.countRows
+    (numVotes:_) :: [E.Value Int] <-
+      E.select . E.from $ \(_ :: E.SqlExpr (Entity Vote)) -> return E.countRows
+    (numComments:_) :: [E.Value Int] <-
+      E.select . E.from $ \(_ :: E.SqlExpr (Entity Comment)) -> return E.countRows
+    return (entriesNVotes, numUsers, numEntries, numVotes, numComments)
   defaultLayout $ do
     setTitle "SpiritBroken!"
     $(widgetFile "homepage")

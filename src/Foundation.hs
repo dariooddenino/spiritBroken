@@ -192,8 +192,9 @@ instance YesodBreadcrumbs App where
   breadcrumb ProfileR = return ("Profile", Just HomeR)
   breadcrumb PostR = return ("Add a entry", Just HomeR)
   breadcrumb (EntryR n) = return ("Entry #" ++ showKey n, Just HomeR)
-  breadcrumb  _ = return ("home", Nothing)
   breadcrumb (UserR n) = return ("User #" ++ showKey n, Just HomeR)
+
+  breadcrumb  _ = return ("home", Nothing)
 
 -- How to run database actions.
 instance YesodPersist App where
@@ -242,7 +243,7 @@ instance YesodAuth App where
                 , userPassword = Nothing
                 , userNumEntries = 0
                 , userAverageVote = 0
-                , userName = person >>= personName >>= nameFormatted
+                , userName = fromMaybe (credsIdent creds) $ person >>= personName >>= nameFormatted
                 , userImage = imageUri <$> (person >>= personImage)
                 , userSignupTime = time
                 , userLastSeen = time

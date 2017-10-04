@@ -9,14 +9,6 @@
         <h2 .title>#{userName user}
         <p .subtitle>Joined on: #{show $ userSignupTime user}
 
-<div .columns>
-  <div .column>
-    <form method=post action=@{ProfileR} enctype=#{formEnctype}>
-      ^{formWidget}
-      <button .button.is-dark>Submit
-
-<div .buffer>
-
 <nav .level.is-mobile>
   <div .level-item.has-text-centered>
     <div>
