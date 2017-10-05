@@ -22,3 +22,4 @@ spiritBroken.cabal
 .sass-cache
 static/css
 launchDev
+deploy
