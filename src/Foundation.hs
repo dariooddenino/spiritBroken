@@ -242,7 +242,9 @@ instance YesodAuth App where
                 { userIdent = credsIdent creds
                 , userPassword = Nothing
                 , userNumEntries = 0
-                , userAverageVote = 0
+                , userAvgVote = 0
+                , userNumComments = 0
+                , userNumVotes = 0
                 , userName = fromMaybe (credsIdent creds) $ person >>= personName >>= nameFormatted
                 , userImage = imageUri <$> (person >>= personImage)
                 , userSignupTime = time

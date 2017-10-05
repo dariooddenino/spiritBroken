@@ -9,7 +9,7 @@
       <p>
         <strong>#{title}</strong>
         <br>
-        <a href="@{UserR userId}"><small>#{name}</small></a><small> @ #{show timeStamp}</small>
+        <a href="@{UserR userId}"><small>#{name}</small></a><small> @ #{timeStamp}</small>
         <br>
         #{url}
      <nav .level.is-mobile.has-text-weight-bold>
@@ -36,4 +36,11 @@
 <div .buffer>
 
 ^{mvForm}
+
+<div .buffer>
+
 ^{mcForm}
+
+<div .buffer>
+$forall (commentE, userE, voteE) <- commentsAndUAndV
+  ^{displayComment commentE userE voteE}

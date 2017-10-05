@@ -11,7 +11,7 @@
       <p>
         <strong><a href="@{EntryR id}">#{title}</a></strong>
         <br>
-        <a href="@{UserR userId}"><small>#{name}</small></a><small> @ #{show timeStamp}</small>
+        <a href="@{UserR userId}"><small>#{name}</small></a><small> @ #{time}</small>
         <br>
         #{url}
      <nav .level.is-mobile.has-text-weight-bold>

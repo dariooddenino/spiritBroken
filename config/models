@@ -3,7 +3,9 @@ User
     password Text Maybe
     UniqueUser ident
     numEntries Int
-    averageVote Int
+    avgVote Int
+    numComments Int
+    numVotes Int
     name Text
     image Text Maybe
     signupTime UTCTime

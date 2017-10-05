@@ -139,10 +139,8 @@ renderCommentForm route (Just (widget, enctype)) = [whamlet|
     <div .media-content>
       <form method=post action=@{route} enctype=#{enctype}>
         ^{widget}
-        <nav .level>
-          <div .level-left>
-            <div .level-item>
-              <button .button.is-fullwidth.is-dark>Comment
+        <button .comment.button.is-fullwidth.is-dark>
+          Comment
 |]
 
 renderVoteForm :: Route App -> Maybe (Widget, Enctype) -> Widget
@@ -152,11 +150,24 @@ renderVoteForm route (Just (widget, enctype)) = [whamlet|
     <div .column>
       <form method=post action=@{route} enctype=#{enctype}>
         ^{widget}
-        <button .button.is-fullwidth.is-dark>Vote
+        <button .vote.button.is-fullwidth.is-dark>
+          Vote
 |]
 
 setPageTitle :: (ToBackendKey SqlBackend a) => Key a -> Widget
 setPageTitle entryId = setTitle $ toHtml $ "Entry #" ++ showKey entryId
+
+retrieveComments :: EntryId -> Handler [(Entity Comment, Entity User, Maybe (Entity Vote))]
+retrieveComments entryId = runDB $
+  E.select $
+    E.from $ \((c `E.InnerJoin` u) `E.LeftOuterJoin` v) -> do
+      E.on $ (v E.?. VoteUserId E.==. E.just (u ^. UserId))
+        E.&&. (v E.?. VoteEntryId E.==. E.just (E.val entryId))
+      E.on $ (c ^. CommentUserId E.==. u ^. UserId)
+        E.&&. (c ^. CommentEntryId E.==. E.val entryId)
+      E.orderBy [E.desc (c ^. CommentTimeStamp)]
+      return (c, u, v)
+
 
 getEntryR :: EntryId -> Handler Html
 getEntryR entryId = do
@@ -164,91 +175,24 @@ getEntryR entryId = do
     e <- get404 entryId
     u <- get404 $ entryUserId e
     return (e, u)
-  let (Entry userId isImage avgVote numVotes numComments timeStamp title url) = entry
+  let (Entry userId isImage avgVote numVotes numComments _ title url) = entry
       name = userName user
   maid <- maybeAuthId
   mvote <- getUserVote maid entryId
+  commentsAndUAndV <- retrieveComments entryId
+  liftIO $ print $ show $ length commentsAndUAndV
+  timeStamp <- liftIO $ printTime $ entryTimeStamp entry
   (mvF, mcF) <- generateEntryForms maid entryId mvote
   let mvForm = renderVoteForm (EntryModR entryId) mvF
-      mcForm = renderVoteForm (EntryModR entryId) mcF
+      mcForm = renderCommentForm (EntryModR entryId) mcF
   defaultLayout $ do
     setPageTitle entryId
     $(widgetFile "entry")
 
-
-
--- postEntryR :: EntryId -> Handler Html
--- postEntryR entryId = do
---   (entry, user) <- runDB $ do
---     e <- get404 entryId
---     u <- get404 $ entryUserId e
---     return (e, u)
---   let (Entry userId isImage avgVote numVotes numComments timeStamp title url) = entry
---       name = userName user
---   maid <- maybeAuthId
---   defaultLayout $ do
---     setPageTitle entryId
---     runMultipleFormsPost [ ]
-
---     $(widgetFile "entry")
--- postEntryR :: EntryId -> Handler Html
--- postEntryR entryId = do
---   entry@(Entry userId isImage avgVote numVotes numComments timeStamp title url) <- runDB $ get404 entryId
---   mUser <- runDB $ get userId
---   name <- case mUser of
---     Just n -> pure $ userName n
---     Nothing -> notFound
---   maid <- maybeAuthId
---   case maid of
---     Just mid -> do
---       ((result, formWidget), formEnctype) <- runFormPost $ voteForm entryId mid
---       ((cResult, comWidget), comEnctype) <- runFormPost $ commentForm entryId mid
---       case result of
---         FormSuccess vote -> do
---           liftIO $ print $ "VOTE SUCCESS: " <> (show vote)
---           votes <- runDB $ getVotes mid entryId
---           liftIO $ print "QUI"
---           case votes of
---             [] -> do
---               let numVotes = entryNumVotes entry + 1
---                   avgVote = (voteValue vote + (entryAvgVote entry * entryNumVotes entry)) `quot` numVotes
---               -- _ <- runDB $ do
---               --   insert vote
---               --   update entryId [ EntryNumVotes =. numVotes
---               --                  , EntryAvgVote =. avgVote
---               --                  ]
---               setSuccessMessage "Vote successfully added."
---               defaultLayout $ do
---                 let voted = True
---                     value = voteValue vote
---                     mForm = Nothing :: Maybe Widget
---                     mCForm = Nothing :: Maybe Widget
---                 setPageTitle entryId
---                 $(widgetFile "entry")
---             _ -> do
---               setWarningMessage "Already voted."
---               defaultLayout $ do
---                 let voted = True
---                     value = voteValue vote
---                     mForm = Nothing :: Maybe Widget
---                     mCForm = Nothing :: Maybe Widget
---                 setPageTitle entryId
---                 $(widgetFile "entry")
---         _ -> do
---           setErrorMessage "There was an error with your vote, please try again."
---           defaultLayout $ do
---             let value = 0 :: Int
---                 voted = False
---                 mForm = Just $ renderVoteForm (EntryR entryId) formEnctype formWidget
---                 mCForm = Nothing :: Maybe Widget
---             setTitle $ toHtml $ "Entry #" ++ showKey entryId
---             $(widgetFile "entry")
---     Nothing -> do
---       setErrorMessage "You must be logged in to vote!"
---       defaultLayout $ do
---         let value = 0 :: Int
---             voted = False
---             mForm = Nothing :: Maybe Widget
---             mCForm = Nothing :: Maybe Widget
---         setPageTitle entryId
---         $(widgetFile "entry")
+displayComment :: Entity Comment -> Entity User -> Maybe (Entity Vote) -> Widget
+displayComment cE uE mvE = do
+  let (Entity _ comment) = cE
+      (Entity uId user) = uE
+      mVote = (\(Entity _ vote) -> voteValue vote) <$> mvE
+  timeStamp <- liftIO $ printTime $ commentTimeStamp comment
+  $(widgetFile "comment")

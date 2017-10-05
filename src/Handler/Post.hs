@@ -91,7 +91,10 @@ postPostR = do
   ((result, formWidget), formEnctype) <- runFormPost $  postForm uid
   case result of
     FormSuccess entry -> do
-      eres <- try $ runDB $ insert $ entry { entryIsImage = isImg (unpack $ entryUrl entry)}
+      eres <- try $ runDB $ do
+        e <- insert $ entry { entryIsImage = isImg (unpack $ entryUrl entry)}
+        _ <- update uid [ UserNumEntries +=. 1 ]
+        return e
       case eres of
         Left (SomeException _) ->
           findAndRedirect (entryUrl entry) formWidget formEnctype

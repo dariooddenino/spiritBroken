@@ -7,22 +7,22 @@
     <section .hero>
       <div .hero-body>
         <h2 .title>#{userName user}
-        <p .subtitle>Joined on: #{show $ userSignupTime user}
+        <p .subtitle>Joined on: #{timeStamp}
 
 <nav .level.is-mobile>
   <div .level-item.has-text-centered>
     <div>
       <p .heading>Total votes
-      <p .title>#{numVotes}
+      <p .title>#{userNumVotes user}
   <div .level-item.has-text-centered>
     <div>
       <p .heading>Average vote
-      <p .title>#{avgVotes}
+      <p .title>#{userAvgVote user}
   <div .level-item.has-text-centered>
     <div>
       <p .heading>Total entries
-      <p .title>#{numEntries}
+      <p .title>#{userNumEntries user}
   <div .level-item.has-text-centered>
     <div>
       <p .heading>Total comments
-      <p .title>#{numComments}
+      <p .title>#{userNumComments user}

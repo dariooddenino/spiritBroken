@@ -26,6 +26,7 @@ displayEntry (Entity id (Entry userId isImage avgVote numVotes numComments timeS
         Nothing -> Nothing
         Just (Entity _ m) -> Just $ voteValue m
       name = userName user
+  time <- liftIO $ printTime timeStamp
   $(widgetFile "entry-line")
 
 

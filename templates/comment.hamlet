@@ -1,0 +1,20 @@
+<article .media>
+  <figure .media-left>
+    <p .image.is-64x64.is-cover>
+      $maybe img <- userImage user
+        <img src="#{img}">
+      $nothing
+        <img src="//bulma.io/images/placeholders/128x128.png">
+  <div .media-content>
+    <div .content>
+      <p>
+        <a href="@{UserR uId}"><strong>#{userName user}</strong></a>
+        $maybe vote <- mVote
+          \ - #
+          <span .has-text-weight-bold>#{vote}
+          <span .icon>
+            <i .fa.fa-graduation-cap>
+        <br>
+        #{commentMessage comment}
+        <br>
+        <small>#{timeStamp}

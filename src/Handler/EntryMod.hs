@@ -2,6 +2,7 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeFamilies #-}
 module Handler.EntryMod where
 
 import Import
@@ -37,17 +38,20 @@ postEntryModR entryId = do
         redirect $ EntryR entryId
       voteHandler (FormSuccess vote) = do
         entry <- runDB $ get404 entryId
-        (uid, _) <- requireAuthPair
+        (uid, user) <- requireAuthPair
         mvote <- getUserVote (Just uid) entryId
         case mvote of
           Nothing -> do
             let numVotes = entryNumVotes entry + 1
                 avgVote = newAverage (voteValue vote) (entryNumVotes entry) (entryAvgVote entry)
+                uAvgVote = newAverage (voteValue vote) (userNumVotes user) (userAvgVote user)
             _ <- runDB $ do
               _ <- insert vote
-              update entryId [ EntryNumVotes =. numVotes
-                             , EntryAvgVote =. avgVote
-                             ]
+              _ <- update entryId [ EntryNumVotes =. numVotes
+                                  , EntryAvgVote =. avgVote
+                                  ]
+              update uid [ UserNumVotes +=. 1
+                         , UserAvgVote =. uAvgVote ]
             setSuccessMessage "Vote successfully added."
             redirect $ EntryR entryId
           _ -> do
@@ -55,5 +59,15 @@ postEntryModR entryId = do
             redirect $ EntryR entryId
 
       commentHandler FormMissing = error "unreachable"
-      commentHandler (FormFailure _) = error "error comment"
-      commentHandler (FormSuccess _) = error "success comment"
+      commentHandler (FormFailure _) = do
+        setErrorMessage "There was an error with your comment, please try again."
+        redirect $ EntryR entryId
+      commentHandler (FormSuccess comment) = do
+        _ <- runDB $ get404 entryId
+        (uid, _) <- requireAuthPair
+        _ <- runDB $ do
+          _ <- insert comment
+          _ <- update entryId [ EntryNumComments +=. 1]
+          update uid [ UserNumComments +=. 1 ]
+        setSuccessMessage "Message added."
+        redirect $ EntryR entryId
