@@ -25,6 +25,8 @@ import qualified Yesod.Core.Unsafe as Unsafe
 import qualified Data.CaseInsensitive as CI
 import qualified Data.Text.Encoding as TE
 
+import Models.User (getAuthInfo)
+
 -- | The foundation datatype for your application. This can be a good place to
 -- keep settings and values requiring initialization before your application
 -- starts running, such as database connections. Every handler will have
@@ -205,23 +207,11 @@ instance YesodPersist App where
 instance YesodPersistRunner App where
     getDBRunner = defaultGetDBRunner appConnPool
 
-
-getUser :: Manager -> HandlerT master IO (Maybe Person)
-getUser m = do
-  token <- getUserAccessToken
-  case token of
-    Nothing -> return Nothing
-    Just t -> getPerson m t
-
--- getPerson' m t = MaybeT $ getPerson m t
--- getToken' = MaybeT getUserAccessToken
--- getUser' m = getToken' >>= getPerson' m
-
-
 instance YesodAuth App where
     type AuthId App = UserId
 
     onLogin = setSuccessMessage "You are now logged in."
+    onLogout = setSuccessMessage "You were successfully logged out."
 
     -- Where to send a user after successful login
     loginDest _ = HomeR
@@ -237,7 +227,7 @@ instance YesodAuth App where
             Just (Entity uid _) -> return $ Authenticated uid
             Nothing -> do
               app <- getYesod
-              person <- lift $ getUser $ appHttpManager app
+              person <- lift $ getAuthInfo creds $ appHttpManager app
               Authenticated <$> insert User
                 { userIdent = credsIdent creds
                 , userPassword = Nothing

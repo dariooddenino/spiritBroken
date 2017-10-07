@@ -14,11 +14,11 @@
         #{url}
      <nav .level.is-mobile.has-text-weight-bold>
        <div .level-left>
-         $maybe value <- mvote
+         $maybe (Entity _ vote) <- mvote
            <p .level-item.has-text-success title="Your vote">
              <span .icon>
                <i .fa.fa-graduation-cap>
-             <span>#{value}
+             <span>#{voteValue vote}
 
          <p .level-item title="Average vote">
            <span .icon>
@@ -35,11 +35,23 @@
 
 <div .buffer>
 
-^{mvForm}
+$maybe ((vWidget, vEnctype), (cWidget, cEnctype)) <- mForms
+  <div .columns>
+    <div .column>
+      <form method=post action=@{EntryModR entryId} enctype=#{vEnctype}>
+        ^{vWidget}
+        <button .button.is-fullwidth.is-dark>
+          Vote
 
-<div .buffer>
+  <div .buffer>
 
-^{mcForm}
+  <article .media>
+    <div .media-content>
+      <form method=post action=@{EntryModR entryId} enctype=#{cEnctype}>
+        ^{cWidget}
+        <button .button.is-fullwidth.is-dark>
+          Comment
+
 
 <div .buffer>
 $forall (commentE, userE, voteE) <- commentsAndUAndV

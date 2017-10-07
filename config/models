@@ -14,11 +14,11 @@ User
 Comment
     message Text
     userId UserId
-    entryId EntryId
+--    entryId EntryId
     timeStamp UTCTime
     deriving Eq
     deriving Show
-Entry json
+Entry
     userId UserId
     isImage Bool
     avgVote Int
@@ -30,9 +30,15 @@ Entry json
     UniqueEntry url
     deriving Eq
     deriving Show
+EntryComment
+    entry EntryId
+    comment CommentId
+EntryVote
+    entry EntryId
+    vote VoteId
 Vote
     value Int
-    entryId EntryId
+--    entryId EntryId
     userId UserId
     timeStamp UTCTime
     deriving Eq

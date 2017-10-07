@@ -48,7 +48,7 @@ printTime t = do
   now <- getCurrentTime
   let secs = diffUTCTime now t
   if secs < 60
-    then pure $ show secs <> " seconds ago"
+    then pure $ show (floor secs) <> " seconds ago"
   else if secs < 60*60
     then pure $ (show $ floor $ secs / 60) <> " minutes ago"
   else if secs < 60*60*24

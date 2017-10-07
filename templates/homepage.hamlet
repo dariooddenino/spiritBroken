@@ -2,21 +2,21 @@
   <div .level-item.has-text-centered>
     <div>
       <p .heading>Users
-      <p .title>#{E.unValue numUsers}
+      <p .title>#{numUsers}
   <div .level-item.has-text-centered>
     <div>
       <p .heading>Entries
-      <p .title>#{E.unValue numEntries}
+      <p .title>#{numEntries}
   <div .level-item.has-text-centered>
     <div>
       <p .heading>Votes
-      <p .title>#{E.unValue numVotes}
+      <p .title>#{numVotes}
   <div .level-item.has-text-centered>
     <div>
       <p .heading>Comments
-      <p .title>#{E.unValue numComments}
+      <p .title>#{numComments}
 
-$if E.unValue numEntries == 0
+$if numEntries == 0
   <section .hero>
     <div .hero-body>
       <p .title.has-text-centered>Nothing yet!
@@ -28,5 +28,5 @@ $if E.unValue numEntries == 0
 
     <div .buffer>
 
-    $if E.unValue numEntries > 0
-      ^{pager (E.unValue numEntries) pagerLimit page}
+    $if numEntries > 0
+      ^{pager numEntries pagerLimit page}

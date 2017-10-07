@@ -8,30 +8,9 @@
 module Handler.Post where
 
 import Import
-import qualified Database.Esqueleto as E
-import Database.Esqueleto ((^.))
 import Data.Time (getCurrentTime)
-import Text.RE.TDFA.String
-
-titleSettings :: Text -> FieldSettings master
-titleSettings tid = FieldSettings
-  { fsLabel = "Title"
-  , fsAttrs = [ ("placeholder", "Enter a title")
-              , ("class", "input is-large") ]
-  , fsTooltip = Nothing
-  , fsName = Just "title"
-  , fsId = Just tid
-  }
-
-urlSettings :: Text -> FieldSettings master
-urlSettings fid = FieldSettings
-  { fsLabel = "Url"
-  , fsAttrs = [ ("placeholder", "Enter a URL")
-              , ("class", "input is-large") ]
-  , fsTooltip = Nothing
-  , fsName = Just "url"
-  , fsId = Just fid
-  }
+import Helpers.Form (titleSettings, urlSettings)
+import Models.Entry (isUrlImg)
 
 postForm :: UserId -> Form Entry
 postForm userId extra = do
@@ -64,41 +43,32 @@ getPostR = do
     setTitle "Post an URL"
     $(widgetFile "post")
 
-errorDisplay :: Widget -> Enctype -> Handler Html
-errorDisplay formWidget formEnctype = do
-  setErrorMessage "There was an error, please try again."
-  defaultLayout $ do
-    setTitle "Post an URL"
-    $(widgetFile "post")
-
-findAndRedirect :: Text -> Widget -> Enctype -> Handler Html
-findAndRedirect url formWidget formEnctype = do
-  entries <- runDB $ E.select $ E.from $ \e -> do
-    E.where_ (e ^. EntryUrl E.==. E.val url)
-    return e
-  case entries of
-    [] -> errorDisplay formWidget formEnctype
-    (Entity eid _ : _) -> do
-      setWarningMessage "The entry was already posted."
-      redirect $ EntryR eid
-
-isImg :: String -> Bool
-isImg s = matched $ s ?=~ [reBI|\.(jpg|png|gif)|]
-
 postPostR :: Handler Html
 postPostR = do
   (uid, _) <- requireAuthPair
-  ((result, formWidget), formEnctype) <- runFormPost $  postForm uid
+  ((result, formWidget), formEnctype) <- runFormPost $ postForm uid
+  time <- liftIO getCurrentTime
   case result of
     FormSuccess entry -> do
-      eres <- try $ runDB $ do
-        e <- insert $ entry { entryIsImage = isImg (unpack $ entryUrl entry)}
-        _ <- update uid [ UserNumEntries +=. 1 ]
-        return e
-      case eres of
-        Left (SomeException _) ->
-          findAndRedirect (entryUrl entry) formWidget formEnctype
-        Right eid -> do
+      existingEntry <- runDB $ getBy $ UniqueEntry (entryUrl entry)
+      _ <- case existingEntry of
+        Just (Entity eId _) -> do
+          setWarningMessage "This entry was already posted!"
+          redirect $ EntryR eId
+        Nothing -> do
+          eid <- runDB $ do
+            e <- insert $ entry { entryIsImage = isUrlImg (unpack $ entryUrl entry)
+                                , entryTimeStamp = time
+                                }
+            _ <- update uid [ UserNumEntries +=. 1 ]
+            return e
           setSuccessMessage "Entry added."
           redirect $ EntryR eid
-    _ -> errorDisplay formWidget formEnctype
+      defaultLayout $ do
+        setTitle "Post an URL"
+        $(widgetFile "post")
+    _ -> do
+      setErrorMessage "There was an error, please try again."
+      defaultLayout $ do
+        setTitle "Post an URL"
+        $(widgetFile "post")
