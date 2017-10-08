@@ -97,28 +97,35 @@ instance Yesod App where
 
         muser <- maybeAuthPair
         mcurrentRoute <- getCurrentRoute
-
+        let isUserAdmin = case muser of
+              Just (_, user) -> userIsAdmin user
+              Nothing -> False
         -- Get the breadcrumbs, as defined in the YesodBreadcrumbs instance.
         (title, parents) <- breadcrumbs
 
         -- Define the menu items of the header.
         let menuItems =
-                [ NavbarLeft $ MenuItem
+                [ NavbarLeft MenuItem
                   { menuItemLabel = "Add entry"
                   , menuItemRoute = PostR
                   , menuItemAccessCallback = isJust muser
                   }
-                , NavbarRight $ MenuItem
+                , NavbarLeft MenuItem
+                  { menuItemLabel = "Manage categories"
+                  , menuItemRoute = AdminCategoriesR
+                  , menuItemAccessCallback = isUserAdmin
+                  }
+                , NavbarRight MenuItem
                     { menuItemLabel = "Login"
                     , menuItemRoute = AuthR LoginR
                     , menuItemAccessCallback = isNothing muser
                     }
-                , NavbarRight $ MenuItem
+                , NavbarRight MenuItem
                     { menuItemLabel = "Logout"
                     , menuItemRoute = AuthR LogoutR
                     , menuItemAccessCallback = isJust muser
                     }
-                , NavbarRight $ MenuItem
+                , NavbarRight MenuItem
                     { menuItemLabel = "Profile"
                     , menuItemRoute = ProfileR
                     , menuItemAccessCallback = isJust muser
@@ -159,6 +166,8 @@ instance Yesod App where
     isAuthorized PostR _ = isAuthenticated
     isAuthorized (EntryModR _) _ = isAuthenticated
 
+    isAuthorized AdminCategoriesR _ = isAdmin
+
     -- This function creates static content files in the static folder
     -- and names them based on a hash of their content. This allows
     -- expiration dates to be set far in the future without worry of
@@ -195,6 +204,7 @@ instance YesodBreadcrumbs App where
   breadcrumb PostR = return ("Add a entry", Just HomeR)
   breadcrumb (EntryR n) = return ("Entry #" ++ showKey n, Just HomeR)
   breadcrumb (UserR n) = return ("User #" ++ showKey n, Just HomeR)
+  breadcrumb AdminCategoriesR = return ("Admin/Categories", Just HomeR)
 
   breadcrumb  _ = return ("home", Nothing)
 
@@ -231,6 +241,7 @@ instance YesodAuth App where
               Authenticated <$> insert User
                 { userIdent = credsIdent creds
                 , userPassword = Nothing
+                , userIsAdmin = False
                 , userNumEntries = 0
                 , userAvgVote = 0
                 , userNumComments = 0
@@ -262,6 +273,14 @@ isAuthenticated = do
     return $ case muid of
         Nothing -> Unauthorized "You must login to access this page"
         Just _ -> Authorized
+
+-- | Access function to determine if a user is an admin.
+isAdmin :: Handler AuthResult
+isAdmin = do
+  (_, user) <- requireAuthPair
+  pure $ if userIsAdmin user
+    then Authorized
+    else Unauthorized "You must be an admin to access this page"
 
 instance YesodAuthPersist App
 

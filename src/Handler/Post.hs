@@ -19,7 +19,7 @@ postForm userId extra = do
   (urlRes, urlView) <- mreq textField (urlSettings fId) Nothing
   (titleRes, titleView) <- mreq textField (titleSettings tId) Nothing
   time <- liftIO getCurrentTime
-  let entryRes = Entry userId False 0 0 0 time <$> titleRes <*> urlRes
+  let entryRes = Entry userId False 0 0 0 time <$> titleRes <*> urlRes <*> pure Nothing
   let widget = [whamlet|
     #{extra}
     <div .field>

@@ -56,7 +56,7 @@ getEntryR entryId = do
     e <- get404 entryId
     u <- get404 $ entryUserId e
     return (e, u)
-  let (Entry userId isImage avgVote numVotes numComments _ title url) = entry
+  let (Entry userId isImage avgVote numVotes numComments _ title url _) = entry
       name = userName user
   maid <- maybeAuthId
   mvote <- getUserVoteEntity maid entryId

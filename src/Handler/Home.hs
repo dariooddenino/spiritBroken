@@ -15,7 +15,7 @@ import Models.Entry (getEntriesWithUserAndVote, pagerLimit)
 import Helpers.Helpers (getPage, ceilPages, getSiteStats)
 
 displayEntry :: Entity Entry -> Maybe (Entity Vote) -> Entity User -> Widget
-displayEntry (Entity id (Entry userId isImage avgVote numVotes numComments timeStamp title url)) voteE (Entity _ user) = do
+displayEntry (Entity id (Entry userId isImage avgVote numVotes numComments timeStamp title url _)) voteE (Entity _ user) = do
   let mValue = case voteE of
         Nothing -> Nothing
         Just (Entity _ m) -> Just $ voteValue m

@@ -2,6 +2,7 @@ User
     ident Text
     password Text Maybe
     UniqueUser ident
+    isAdmin Bool
     numEntries Int
     avgVote Int
     numComments Int
@@ -14,7 +15,6 @@ User
 Comment
     message Text
     userId UserId
---    entryId EntryId
     timeStamp UTCTime
     deriving Eq
     deriving Show
@@ -28,6 +28,7 @@ Entry
     title Text
     url Text
     UniqueEntry url
+    category CategoryId Maybe
     deriving Eq
     deriving Show
 EntryComment
@@ -38,9 +39,13 @@ EntryVote
     vote VoteId
 Vote
     value Int
---    entryId EntryId
     userId UserId
     timeStamp UTCTime
+    deriving Eq
+    deriving Show
+Category
+    name Text
+    slug Text
     deriving Eq
     deriving Show
 

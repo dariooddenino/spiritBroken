@@ -12,25 +12,26 @@
   <!--   $maybe (uid, user) <- muser -->
   <!--     $maybe n <- userImage user -->
   <!--       #{n} -->
-    <div .navbar-start>
-      $forall MenuItem label route _ <- navbarLeftFilteredMenuItems
-        <a :Just route == mcurrentRoute:.is-active .navbar-item href="@{route}">
-          #{label}
-    <div .navbar-end>
-      $forall MenuItem label route _ <- navbarRightFilteredMenuItems
-        <a :Just route == mcurrentRoute:.is-active .navbar-item href="@{route}">
-          $case route
-            $of ProfileR
-              $maybe (uid, user) <- muser
-                $maybe iurl <- userImage user
-                  <figure .image>
-                    <img src="#{iurl}">
+    <div #navMenu .navbar-menu>
+      <div .navbar-start>
+        $forall MenuItem label route _ <- navbarLeftFilteredMenuItems
+          <a :Just route == mcurrentRoute:.is-active .navbar-item href="@{route}">
+            #{label}
+      <div .navbar-end>
+        $forall MenuItem label route _ <- navbarRightFilteredMenuItems
+          <a :Just route == mcurrentRoute:.is-active .navbar-item href="@{route}">
+            $case route
+              $of ProfileR
+                $maybe (uid, user) <- muser
+                  $maybe iurl <- userImage user
+                    <figure .image.is-24x24.is-cover>
+                      <img src="#{iurl}">
+                  $nothing
+                    #{label}
                 $nothing
                   #{label}
-              $nothing
+              $of _
                 #{label}
-            $of _
-              #{label}
 
 <!-- Page Contents -->
 

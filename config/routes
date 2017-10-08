@@ -12,3 +12,4 @@
 /e/#EntryId EntryR GET
 /u/#UserId UserR GET
 /e/#EntryId/mod EntryModR POST
+/admin/categories AdminCategoriesR GET POST
